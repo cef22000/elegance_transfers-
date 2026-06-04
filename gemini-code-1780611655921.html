@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elegance Transfers - Sistema Completo</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #555;
+            margin: 0;
+            padding: 10px;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 15px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        h2 { font-family: Arial, sans-serif; color: #1a365d; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .header-botones { display: flex; gap: 6px; }
+
+        .btn-import { background-color: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 6px 12px; font-size: 12px; font-family: Arial, sans-serif; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+        .btn-import:hover { background-color: #e2e8f0; }
+        
+        .step { display: none; }
+        .active { display: block; }
+        
+        .bloque-formulario { background-color: #f7fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+        .bloque-titulo { font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #4a5568; margin: 0 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
+        
+        .fila-input { display: flex; gap: 10px; margin-bottom: 8px; }
+        .fila-input:last-child { margin-bottom: 0; }
+        .col-input { flex: 1; min-width: 0; }
+        
+        label { font-weight: bold; display: block; margin-bottom: 3px; font-family: Arial, sans-serif; font-size: 13px; color: #2d3748; }
+        input { width: 100%; padding: 8px; border: 1px solid #a0aec0; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: Arial, sans-serif; }
+        input:focus { border-color: #4299e1; outline: none; background-color: #fff; }
+        
+        .btn { background-color: #1a365d; color: white; border: 2px solid #000; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; text-transform: uppercase; border-radius: 4px; }
+        .btn:hover { background-color: #2b6cb0; }
+        .btn-back { background-color: #888; margin-top: 10px; }
+        
+        .btn-pdf { background-color: #dd6b20; border-color: #c05621; margin-top: 10px; display: none; }
+        .btn-pdf:hover { background-color: #c05621; }
+
+        .campo-protegido { background-color: #cbd5e0; font-weight: bold; color: #1a365d; text-align: center; border: 1px solid #a0aec0; }
+
+        .boleta-papel { border: 2px solid #000; padding: 15px; background-color: #fff; box-sizing: border-box; width: 100%; }
+        .boleta-header { width: 100%; border-bottom: 1px solid #000; padding-bottom: 8px; margin-bottom: 15px; }
+        .header-title { font-size: 18px; font-weight: bold; text-align: center; margin: 0; font-family: Arial, sans-serif; }
+        .header-subtitle { font-size: 10px; text-align: center; color: #444; margin: 2px 0 5px 0; }
+        
+        .fila-doble { display: flex; width: 100%; gap: 15px; margin-bottom: 10px; }
+        .col-mitad { flex: 1; display: flex; align-items: flex-end; }
+        
+        .linea-dato { margin-bottom: 12px; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: flex-end; width: 100%; }
+        
+        .puntos { border-bottom: 1px dashed #666; flex: 1; min-width: 60px; font-weight: bold; padding-left: 5px; white-space: normal; word-break: break-word; }
+
+        .seccion-tabla-precios { width: 100%; margin-top: 15px; margin-bottom: 25px; }
+        .tabla-precios { width: 100%; border-collapse: collapse; box-sizing: border-box; }
+        .tabla-precios td { border: 1px solid #000; padding: 8px 10px; font-size: 14px; }
+        .td-gris { background-color: #f0f0f0; font-weight: bold; width: 50%; }
+        .td-monto { text-align: right; font-weight: bold; }
+        .row-total { font-size: 16px; font-weight: bold; background-color: #e0e0e0; }
+
+        .seccion-firma { width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; border-top: 1px dashed #000; padding-top: 15px; margin-top: 15px; }
+        .canvas-container { width: 100%; max-width: 500px; margin: 5px 0; box-sizing: border-box; position: relative; }
+        #canvasFirma { border: 1px solid #000; background-color: #fafafa; touch-action: none; width: 100%; height: 160px; box-sizing: border-box; display: block; }
+        
+        .firma-label { font-size: 15px; font-weight: bold; width: 100%; margin: 4px auto 6px auto; font-family: Arial, sans-serif; text-transform: uppercase; color: #000; }
+        
+        .firma-disclaimer { 
+            font-size: 18px; 
+            font-weight: bold;
+            color: #c53030; 
+            margin-bottom: 15px; 
+            font-family: Arial, sans-serif; 
+            line-height: 1.3;
+            background-color: #fffaf0;
+            border: 3px dashed #dd6b20;
+            padding: 12px;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        
+        .btn-clear { display: inline-block; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: #4a5568; background-color: #edf2f7; border: 1px solid #cbd5e0; padding: 10px 16px; border-radius: 6px; text-decoration: none; margin-top: 5px; cursor: pointer; text-transform: uppercase; text-align: center; }
+        .btn-enviar { background-color: #25D366; border-color: #128C7E; color: white; }
+
+        .panel-historial { display: none; background: #edf2f7; border: 2px solid #cbd5e0; padding: 12px; border-radius: 6px; margin-bottom: 15px; max-height: 250px; overflow-y: auto; }
+        .item-historial { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-bottom: 6px; border: 1px solid #a0aec0; border-radius: 4px; font-size: 12px; font-family: Arial, sans-serif; }
+        .item-historial button { background: #1a365d; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        
+        .btn-bloqueado {
+            background-color: #a0aec0 !important;
+            border-color: #718096 !important;
+            cursor: not-allowed !important;
+        }
+
+        /* CONFIGURACIÓN DE IMPRESIÓN / PDF MODIFICADA */
+        @media print {
+            /* Esta regla oculta la ruta del archivo y la fecha del navegador */
+            @page { margin: 0; } 
+            
+            body { 
+                background: white; 
+                padding: 20px; /* Separamos un poco del borde para que no se corte al imprimir sin márgenes */
+                margin: 0; 
+                display: block; 
+            }
+            .container { box-shadow: none; border: none; padding: 0; max-width: 100%; width: 100%; margin: 0; }
+            .boleta-papel { border: 2px solid #000; padding: 15px; }
+            .btn, .btn-back, .btn-clear, .btn-enviar, .btn-bloqueado, .btn-pdf, #btnLimpiar { display: none !important; }
+            .firma-disclaimer { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="header-app">
+        <h2>Elegance</h2>
+        <div class="header-botones" id="bloqueBotonesAdmin">
+            <button class="btn-import" onclick="toggleHistorialPanel()">📋 Historial</button>
+            <label class="btn-import" for="importFile">📥 Importar</label>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+    </div>
+
+    <div id="panelHistorial" class="panel-historial">
+        <div class="bloque-titulo" style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+            <span>Respaldos en este Teléfono (Últimos 30)</span>
+            <span style="color:red; cursor:pointer;" onclick="toggleHistorialPanel()">[Cerrar]</span>
+        </div>
+        <div id="listaRespaldos"></div>
+    </div>
+    
+    <!-- PÁGINA 1 -->
+    <div id="paso1" class="step active">
+        
+        <div class="bloque-formulario" style="background-color: #edf2f7;">
+            <div class="bloque-titulo">Datos del Talonario</div>
+            <div class="fila-input">
+                <div class="col-input"><label>N° Voucher:</label><input type="text" id="vNumero" placeholder="00004810"></div>
+                <div class="col-input"><label>Fecha:</label><input type="date" id="vFecha"></div>
+                <div class="col-input"><label>Hora:</label><input type="time" id="vHora"></div>
+            </div>
+        </div>
+
+        <div class="bloque-formulario">
+            <div class="bloque-titulo">Detalle de Prestación</div>
+            <div class="fila-input">
+                <div class="col-input"><label>Empresa:</label><input type="text" id="empresa" list="lista-empresas"><datalist id="lista-empresas"></datalist></div>
+                <div class="col-input"><label>Solicitado por:</label><input type="text" id="solicitado" list="lista-solicitados"><datalist id="lista-solicitados"></datalist></div>
+            </div>
+            <div class="fila-input">
+                <div class="col-input"><label>Móvil:</label><input type="text" id="vehiculo" list="lista-vehiculos"><datalist id="lista-vehiculos"></datalist></div>
+                <div class="col-input"><label>Sección:</label><input type="text" id="seccion" list="lista-secciones"><datalist id="lista-secciones"></datalist></div>
+            </div>
+            <div class="fila-input">
+                <div class="col-input"><label>Pasajero/s:</label><input type="text" id="pasajero" list="lista-pasajeros"><datalist id="lista-pasajeros"></datalist></div>
+            </div>
+        </div>
+
+        <div class="bloque-formulario">
+            <div class="bloque-titulo">Itinerario</div>
+            <div class="fila-input">
+                <div class="col-input"><label>Origen:</label><input type="text" id="origen" list="lista-origenes"><datalist id="lista-origenes"></datalist></div>
+                <div class="col-input"><label>Destino:</label><input type="text" id="destino" list="lista-destinos"><datalist id="lista-destinos"></datalist></div>
+            </div>
+        </div>
+
+        <div class="bloque-formulario">
+            <div class="bloque-titulo">Observaciones</div>
+            <div class="fila-input">
+                <div class="col-input">
+                    <textarea id="vObservaciones" placeholder="Detalles, demoras, paradas adicionales..." rows="2" style="width: 100%; padding: 8px; border: 1px solid #a0aec0; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: Arial, sans-serif; resize: none;"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="bloque-formulario">
+            <div class="bloque-titulo">Valores de la Boleta ($)</div>
+            
+            <div class="fila-input" style="background-color: #e2e8f0; padding: 8px; border-radius: 4px; margin-bottom: 12px; border: 1px dashed #a0aec0;">
+                <div class="col-input">
+                    <label style="font-size: 11px;">Cant. KM:</label>
+                    <input type="number" id="calcCantKm" oninput="calcularImportes()" step="0.1">
+                </div>
+                <div class="col-input">
+                    <label style="font-size: 11px; cursor: help;" id="labelPrecioKm" title="Click para cambiar">Precio KM ($):</label>
+                    <input type="text" id="calcPrecioKm" class="campo-protegido" readonly onclick="cambiarValorSeguro('calcPrecioKm', 'precio_km_guardado', 'Precio x KM')">
+                </div>
+                <div class="col-input">
+                    <label style="font-size: 11px;">Espera (Hs/Min):</label>
+                    <div style="display: flex; gap: 4px;">
+                        <input type="number" id="calcHoras" placeholder="Hs" oninput="calcularImportes()" style="width: 50%;">
+                        <input type="number" id="calcMinutos" placeholder="Min" oninput="calcularImportes()" style="width: 50%;">
+                    </div>
+                </div>
+                <div class="col-input">
+                    <label style="font-size: 11px; cursor: help;" id="labelPrecioEspera" title="Click para cambiar">Precio Hora ($):</label>
+                    <input type="text" id="calcPrecioEspera" class="campo-protegido" readonly onclick="cambiarValorSeguro('calcPrecioEspera', 'precio_hora_guardado', 'Precio por Hora')">
+                </div>
+            </div>
+
+            <div class="fila-input">
+                <div class="col-input">
+                    <label>Total Km.:</label>
+                    <input type="number" id="vKm" readonly style="background-color: #f7fafc;">
+                </div>
+                <div class="col-input">
+                    <label>Total Espera:</label>
+                    <input type="number" id="vEspera" readonly style="background-color: #f7fafc;">
+                </div>
+                <div class="col-input">
+                    <label>Peajes:</label>
+                    <input type="number" id="vPeajes">
+                </div>
+                <div class="col-input">
+                    <label>Estacionam.:</label>
+                    <input type="number" id="vEstac">
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" onclick="irAlPaso2()">Generar Vista de Boleta</button>
+    </div>
+
+    <!-- PÁGINA 2 -->
+    <div id="paso2" class="step">
+        <div class="boleta-papel" id="area-impresion">
+            <div class="boleta-header">
+                <div class="header-title">BOLETA DE VIAJE</div>
+                <div class="header-subtitle">DOCUMENTO NO VÁLIDO COMO FACTURA</div>
+                <table style="width:100%; font-size:12px; margin-top:5px;">
+                    <tr>
+                        <td style="font-weight:bold;">Elegance Transfers</td>
+                        <td style="text-align: right; font-weight:bold;">N° 0001 - <span id="resVoucher">________</span></td>
+                    </tr>
+                    <tr>
+                        <td id="resFecha">FECHA: __ / __ / ____</td>
+                        <td style="text-align: right;" id="resHora">Hora: __:__</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="fila-doble">
+                <div class="col-mitad" style="font-size: 14px;">MÓVIL:&nbsp;<span class="puntos" id="resVehiculo"></span></div>
+                <div class="col-mitad" style="font-size: 14px;">SECCIÓN:&nbsp;<span class="puntos" id="resSeccion"></span></div>
+            </div>
+
+            <div class="linea-dato">Solicitado por:&nbsp;<span class="puntos" id="resSolicitado"></span></div>
+            <div class="linea-dato">Empresa:&nbsp;<span class="puntos" id="resEmpresa"></span></div>
+            <div class="linea-dato">Pasajero/s:&nbsp;<span class="puntos" id="resPasajero"></span></div>
+            <div class="linea-dato">Viaje Desde:&nbsp;<span class="puntos" id="resOrigen"></span></div>
+            <div class="linea-dato">Viaje Hasta:&nbsp;<span class="puntos" id="resDestino"></span></div>
+            <div class="linea-dato">Observaciones:&nbsp;<span class="puntos" id="resObservaciones"></span></div>
+
+            <div class="seccion-tabla-precios">
+                <table class="tabla-precios">
+                    <tr><td class="td-gris">Km./ Tab.</td><td class="td-monto" id="mKm">$ -</td></tr>
+                    <tr><td class="td-gris">Espera</td><td class="td-monto" id="mEspera">$ -</td></tr>
+                    <tr><td class="td-gris">Peaje/s</td><td class="td-monto" id="mPeajes">$ -</td></tr>
+                    <tr><td class="td-gris">Estacionam.</td><td class="td-monto" id="mEstac">$ -</td></tr>
+                    <tr class="row-total"><td style="border: 2px solid #000;">TOTAL</td><td style="border: 2px solid #000;" class="td-monto" id="mTotal">$ -</td></tr>
+                </table>
+            </div>
+
+            <div class="seccion-firma">
+                <div class="firma-label">X — Firma del Pasajero / Signature</div>
+                
+                <div class="firma-disclaimer">
+                    ⚠️ Nota: Esta firma es de <u>un solo uso</u> y exclusiva para este viaje.<br>
+                    ⚠️ Note: This signature is for <u>single use</u> only and exclusive to this trip.
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="canvasFirma"></canvas>
+                </div>
+                
+                <div style="width: 100%; max-width: 500px; text-align: left; margin-top: 8px;">
+                    <label style="font-size: 12px; margin-bottom: 2px; font-family: Arial, sans-serif;">Aclaración / Nombre:</label>
+                    <input type="text" id="vAclaracion" style="border: 1px solid #000; padding: 6px; background-color: #fafafa; border-radius: 0;">
+                </div>
+
+                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                    <a href="#" class="btn-clear btn-enviar" onclick="aceptarYEnviar(event)">📲 Aceptar y Enviar</a>
+                    <a href="#" class="btn-clear" onclick="limpiarFirma(event)">🗑️ Borrar Firma</a>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnPdf" class="btn btn-pdf" onclick="window.print()">📄 Guardar como PDF</button>
+        <button id="btnLimpiar" class="btn btn-bloqueado" onclick="finalizarVoucher()" disabled>⚠️ Terminar y Limpiar Planilla (Bloqueado)</button>
+        <button class="btn btn-back" onclick="volverAlPaso1()">Volver a Corregir Datos</button>
+    </div>
+</div>
+
+<script>
+    let firmaGuardada = null;
+    let canvasBloqueado = false;
+
+    function cambiarValorSeguro(idInput, keyStorage, nombre) {
+        const parametros = new URLSearchParams(window.location.search);
+        if (parametros.get('modo') !== 'pro') {
+            alert("🔒 Modo Usuario Activado.\nSolo el administrador puede cambiar los precios prefijados.");
+            return;
+        }
+
+        let actual = document.getElementById(idInput).value;
+        let nuevo = prompt("MODO PRO ACTIVO.\n\nIngrese el nuevo valor para " + nombre + ":", actual);
+        
+        if (nuevo !== null && nuevo.trim() !== "") {
+            nuevo = nuevo.replace(',', '.'); 
+            if (!isNaN(nuevo)) {
+                document.getElementById(idInput).value = parseFloat(nuevo);
+                localStorage.setItem(keyStorage, parseFloat(nuevo));
+                calcularImportes();
+            } else {
+                alert("Por favor, ingrese un número válido.");
+            }
+        }
+    }
+
+    function calcularImportes() {
+        let cKm = parseFloat(document.getElementById('calcCantKm').value) || 0;
+        let pKm = parseFloat(document.getElementById('calcPrecioKm').value) || 0;
+        let hs = parseFloat(document.getElementById('calcHoras').value) || 0;
+        let mins = parseFloat(document.getElementById('calcMinutos').value) || 0;
+        let pEsp = parseFloat(document.getElementById('calcPrecioEspera').value) || 0;
+        
+        let tiempoHoras = hs + (mins / 60);
+        let totKm = cKm * pKm;
+        let totEsp = tiempoHoras * pEsp;
+        
+        document.getElementById('vKm').value = totKm > 0 ? totKm.toFixed(2) : "";
+        document.getElementById('vEspera').value = totEsp > 0 ? totEsp.toFixed(2) : "";
+    }
+
+    window.onload = function() {
+        const parametros = new URLSearchParams(window.location.search);
+        let inputPrecioKm = document.getElementById('calcPrecioKm');
+        let inputPrecioEspera = document.getElementById('calcPrecioEspera');
+        let labelPrecioKm = document.getElementById('labelPrecioKm');
+        let labelPrecioEspera = document.getElementById('labelPrecioEspera');
+
+        if (parametros.get('modo') !== 'pro') {
+            inputPrecioKm.style.cursor = "not-allowed";
+            inputPrecioEspera.style.cursor = "not-allowed";
+            labelPrecioKm.title = "Bloqueado por el administrador";
+            labelPrecioEspera.title = "Bloqueado por el administrador";
+        } else {
+            inputPrecioKm.style.cursor = "pointer";
+            inputPrecioEspera.style.cursor = "pointer";
+            inputPrecioKm.style.backgroundColor = "#fff3cd"; 
+            inputPrecioEspera.style.backgroundColor = "#fff3cd";
+            
+            let btnPdf = document.getElementById('btnPdf');
+            if(btnPdf) {
+                btnPdf.style.display = 'block';
+            }
+        }
+
+        document.getElementById('calcPrecioKm').value = localStorage.getItem('precio_km_guardado') || "100";
+        document.getElementById('calcPrecioEspera').value = localStorage.getItem('precio_hora_guardado') || "5000";
+
+        let ahora = new Date();
+        let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
+        let dia = ("0" + ahora.getDate()).slice(-2);
+        document.getElementById('vFecha').value = ahora.getFullYear() + "-" + mes + "-" + dia;
+        
+        let horas = ("0" + ahora.getHours()).slice(-2);
+        let minutos = ("0" + ahora.getMinutes()).slice(-2);
+        document.getElementById('vHora').value = horas + ":" + minutos;
+
+        let ultimoNumero = localStorage.getItem('ultimo_voucher_numero');
+        if (ultimoNumero) {
+            document.getElementById('vNumero').value = String(parseInt(ultimoNumero) + 1).padStart(8, '0');
+        } else {
+            document.getElementById('vNumero').value = "00004810";
+        }
+
+        actualizarDatalist('empresa', 'lista-empresas');
+        actualizarDatalist('vehiculo', 'lista-vehiculos');
+        actualizarDatalist('solicitado', 'lista-solicitados');
+        actualizarDatalist('seccion', 'lista-secciones');
+        actualizarDatalist('pasajero', 'lista-pasajeros');
+        actualizarDatalist('origen', 'lista-origenes');
+        actualizarDatalist('destino', 'lista-destinos');
+
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    let data = JSON.parse(evt.target.result);
+                    cargarEstructuraData(data);
+                    alert("✅ Datos y firma cargados correctamente.");
+                } catch (err) {
+                    alert("Error al leer el archivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        renderHistorialLocal();
+    };
+
+    function cargarEstructuraData(data) {
+        document.getElementById('vNumero').value = data.vNumero || '';
+        document.getElementById('vFecha').value = data.vFecha || '';
+        document.getElementById('vHora').value = data.vHora || '';
+        document.getElementById('empresa').value = data.empresa || '';
+        document.getElementById('solicitado').value = data.solicitado || '';
+        document.getElementById('vehiculo').value = data.vehiculo || '';
+        document.getElementById('seccion').value = data.seccion || '';
+        document.getElementById('pasajero').value = data.pasajero || '';
+        document.getElementById('origen').value = data.origen || '';
+        document.getElementById('destino').value = data.destino || '';
+        document.getElementById('vObservaciones').value = data.vObservaciones || '';
+        document.getElementById('calcCantKm').value = data.calcCantKm || '';
+        document.getElementById('calcPrecioKm').value = data.calcPrecioKm || '';
+        document.getElementById('calcHoras').value = data.calcHoras || '';
+        document.getElementById('calcMinutos').value = data.calcMinutos || '';
+        document.getElementById('calcPrecioEspera').value = data.calcPrecioEspera || '';
+        document.getElementById('vPeajes').value = data.vPeajes || '';
+        document.getElementById('vEstac').value = data.vEstac || '';
+        document.getElementById('vAclaracion').value = data.vAclaracion || '';
+
+        firmaGuardada = data.firma || null; 
+        canvasBloqueado = data.firma ? true : false;
+        
+        calcularImportes();
+        irAlPaso2();
+    }
+
+    function guardarEnHistorialPermanente(idCampo) {
+        let valor = document.getElementById(idCampo).value.trim();
+        if (!valor) return;
+        let historial = JSON.parse(localStorage.getItem('historial_completo_' + idCampo)) || [];
+        let index = historial.indexOf(valor);
+        if (index > -1) historial.splice(index, 1);
+        historial.unshift(valor);
+        localStorage.setItem('historial_completo_' + idCampo, JSON.stringify(historial));
+    }
+
+    function actualizarDatalist(idCampo, idDatalist) {
+        let historial = JSON.parse(localStorage.getItem('historial_completo_' + idCampo)) || [];
+        let datalist = document.getElementById(idDatalist);
+        datalist.innerHTML = "";
+        historial.forEach(function(item) {
+            let option = document.createElement('option');
+            option.value = item;
+            datalist.appendChild(option);
+        });
+    }
+
+    function irAlPaso2() {
+        let fechaIngresada = document.getElementById('vFecha').value;
+        if(fechaIngresada) {
+            let partes = fechaIngresada.split("-");
+            document.getElementById('resFecha').innerText = "FECHA: " + partes[2] + "/" + partes[1] + "/" + partes[0];
+        }
+
+        document.getElementById('resHora').innerText = "Hora: " + document.getElementById('vHora').value;
+        let numVoucher = document.getElementById('vNumero').value || "00004810";
+        document.getElementById('resVoucher').innerText = numVoucher.padStart(8, '0');
+
+        document.getElementById('resVehiculo').innerText = document.getElementById('vehiculo').value || " ";
+        document.getElementById('resSolicitado').innerText = document.getElementById('solicitado').value || " ";
+        document.getElementById('resEmpresa').innerText = document.getElementById('empresa').value || " ";
+        document.getElementById('resSeccion').innerText = document.getElementById('seccion').value || " ";
+        document.getElementById('resPasajero').innerText = document.getElementById('pasajero').value || " ";
+        document.getElementById('resOrigen').innerText = document.getElementById('origen').value || " ";
+        document.getElementById('resDestino').innerText = document.getElementById('destino').value || " ";
+        document.getElementById('resObservaciones').innerText = document.getElementById('vObservaciones').value || " ";
+
+        let km = parseFloat(document.getElementById('vKm').value) || 0;
+        let espera = parseFloat(document.getElementById('vEspera').value) || 0;
+        let peajes = parseFloat(document.getElementById('vPeajes').value) || 0;
+        let estac = parseFloat(document.getElementById('vEstac').value) || 0;
+        let total = km + espera + peajes + estac;
+
+        document.getElementById('mKm').innerText = km > 0 ? "$ " + km.toFixed(2) : "$ -----";
+        document.getElementById('mEspera').innerText = espera > 0 ? "$ " + espera.toFixed(2) : "$ -----";
+        document.getElementById('mPeajes').innerText = peajes > 0 ? "$ " + peajes.toFixed(2) : "$ -----";
+        document.getElementById('mEstac').innerText = estac > 0 ? "$ " + estac.toFixed(2) : "$ -----";
+        
+        if (total === 0) {
+            document.getElementById('mTotal').innerText = "CTA. CTE.";
+        } else {
+            document.getElementById('mTotal').innerText = "$ " + total.toFixed(2);
+        }
+
+        document.getElementById('paso1').classList.remove('active');
+        document.getElementById('paso2').classList.add('active');
+        
+        document.getElementById('bloqueBotonesAdmin').style.display = 'none';
+        
+        inicializarCanvas();
+    }
+
+    function volverAlPaso1() {
+        document.getElementById('paso2').classList.remove('active');
+        document.getElementById('paso1').classList.add('active');
+        document.getElementById('bloqueBotonesAdmin').style.display = 'flex';
+    }
+
+    function finalizarVoucher() {
+        if(!confirm("⚠️ ¿Estás seguro de que querés borrar todo y empezar un viaje nuevo?\n\nLos datos ya enviados o guardados en tu historial local no se van a perder.")) {
+            return; 
+        }
+
+        let numeroActual = document.getElementById('vNumero').value || "00004810";
+        localStorage.setItem('ultimo_voucher_numero', numeroActual);
+
+        guardarEnHistorialPermanente('empresa');
+        guardarEnHistorialPermanente('vehiculo');
+        guardarEnHistorialPermanente('solicitado');
+        guardarEnHistorialPermanente('seccion');
+        guardarEnHistorialPermanente('pasajero');
+        guardarEnHistorialPermanente('origen');
+        guardarEnHistorialPermanente('destino');
+
+        location.reload();
+    }
+
+    function guardarRespaldoLocal(data) {
+        let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
+        lista = lista.filter(item => item.vNumero !== data.vNumero);
+        lista.unshift(data); 
+        if(lista.length > 30) lista.pop(); 
+        localStorage.setItem('respaldos_seguridad_local', JSON.stringify(lista));
+        renderHistorialLocal();
+    }
+
+    function toggleHistorialPanel() {
+        let p = document.getElementById('panelHistorial');
+        
+        if (p.style.display === 'block') {
+            p.style.display = 'none';
+            return;
+        }
+        
+        let clave = prompt("🔐 ACCESO RESTRINGIDO\n\nIngrese la clave de administrador para ver el historial:");
+        
+        if (clave === "1234") { 
+            p.style.display = 'block';
+        } else if (clave !== null) {
+            alert("❌ Clave incorrecta. Acceso denegado.");
+        }
+    }
+
+    function renderHistorialLocal() {
+        let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
+        let cont = document.getElementById('listaRespaldos');
+        cont.innerHTML = "";
+        
+        if(lista.length === 0) {
+            cont.innerHTML = "<div style='font-size:12px;color:#718096;text-align:center;padding:10px;'>No hay vouchers respaldados todavía.</div>";
+            return;
+        }
+
+        lista.forEach((item, index) => {
+            let div = document.createElement('div');
+            div.className = "item-historial";
+            let partFecha = item.vFecha ? item.vFecha.split("-") : ["??","??","??"];
+            let fFormato = partFecha[2] + "/" + partFecha[1];
+            
+            div.innerHTML = `
+                <div><strong>N° ${item.vNumero || 'S/N'}</strong> - ${item.empresa || 'Sin Empresa'} (${fFormato} - ${item.vHora || ''})</div>
+                <button onclick="recuperarVoucherLocal(${index})">Cargar</button>
+            `;
+            cont.appendChild(div);
+        });
+    }
+
+    function habilitarBotonLimpiar() {
+        let btnLimpiar = document.getElementById('btnLimpiar');
+        btnLimpiar.disabled = false;
+        btnLimpiar.classList.remove('btn-bloqueado');
+        btnLimpiar.style.backgroundColor = "#e53e3e";
+        btnLimpiar.style.borderColor = "#c53030";
+        btnLimpiar.innerHTML = "⚠️ Terminar y Limpiar Planilla";
+    }
+
+    async function aceptarYEnviar(e) {
+        e.preventDefault();
+        
+        if(!canvasBloqueado) {
+            firmaGuardada = canvas.toDataURL();
+            canvasBloqueado = true;
+        }
+
+        let data = {
+            vNumero: document.getElementById('vNumero').value,
+            vFecha: document.getElementById('vFecha').value,
+            vHora: document.getElementById('vHora').value,
+            empresa: document.getElementById('empresa').value,
+            solicitado: document.getElementById('solicitado').value,
+            vehiculo: document.getElementById('vehiculo').value,
+            seccion: document.getElementById('seccion').value,
+            pasajero: document.getElementById('pasajero').value,
+            origen: document.getElementById('origen').value,
+            destino: document.getElementById('destino').value,
+            vObservaciones: document.getElementById('vObservaciones').value,
+            calcCantKm: document.getElementById('calcCantKm').value,
+            calcPrecioKm: document.getElementById('calcPrecioKm').value,
+            calcHoras: document.getElementById('calcHoras').value,
+            calcMinutos: document.getElementById('calcMinutos').value,
+            calcPrecioEspera: document.getElementById('calcPrecioEspera').value,
+            vPeajes: document.getElementById('vPeajes').value,
+            vEstac: document.getElementById('vEstac').value,
+            vAclaracion: document.getElementById('vAclaracion').value,
+            firma: firmaGuardada
+        };
+
+        guardarRespaldoLocal(data);
+
+        let empresaNombre = data.empresa ? data.empresa.replace(/\s+/g, '_') : 'SinEmpresa';
+        let fileName = "Voucher_" + data.vNumero + "_" + empresaNombre + ".json";
+        
+        let jsonStr = JSON.stringify(data);
+        let blob = new Blob([jsonStr], { type: "application/json" });
+
+        const BOT_TOKEN = "8680131403:AAHb1uAf3bYAIhzEZR4zA_auHubmu7iiAFg";
+        const CHAT_ID = "8359032557"; 
+        
+        let kmText = document.getElementById('mKm').innerText;
+        let esperaText = document.getElementById('mEspera').innerText;
+        let peajesText = document.getElementById('mPeajes').innerText;
+        let estacText = document.getElementById('mEstac').innerText;
+        let totalText = document.getElementById('mTotal').innerText;
+
+        let textoTelegram = 
+            "📄 *VOUCHER N° " + (data.vNumero || "S/N") + "*\n" +
+            "📅 " + (data.vFecha || "-") + " | 🕒 " + (data.vHora || "-") + "\n" +
+            "🚗 Móvil: " + (data.vehiculo || "-") + " | Sec: " + (data.seccion || "-") + "\n" +
+            "🏢 Empresa: " + (data.empresa || "-") + "\n" +
+            "👤 Pasajero: " + (data.pasajero || "-") + "\n" +
+            "📍 Desde: " + (data.origen || "-") + "\n" +
+            "🏁 Hasta: " + (data.destino || "-") + "\n" +
+            "──────────────\n" +
+            "Km: " + kmText + "\n" +
+            "Espera: " + esperaText + "\n" +
+            "Peajes: " + peajesText + "\n" +
+            "Estac: " + estacText + "\n" +
+            "💰 *TOTAL: " + totalText + "*";
+
+        let formData = new FormData();
+        formData.append("chat_id", CHAT_ID);
+        formData.append("document", blob, fileName);
+        formData.append("caption", textoTelegram);
+
+        let btn = document.querySelector('.btn-enviar');
+        let textoOriginal = btn.innerHTML;
+        btn.innerHTML = "⏳ Enviando a tu chat...";
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.7";
+
+        try {
+            let response = await fetch("https://api.telegram.org/bot" + BOT_TOKEN + "/sendDocument", {
+                method: "POST",
+                body: formData
+            });
+
+            let resData = await response.json();
+
+            btn.innerHTML = textoOriginal;
+            btn.style.pointerEvents = "auto";
+            btn.style.opacity = "1";
+
+            if (resData.ok) {
+                alert("🚀 ¡Voucher enviado de forma directa a tu chat con éxito!");
+                habilitarBotonLimpiar(); 
+            } else {
+                throw new Error(resData.description || "Error de API");
+            }
+        } catch (err) {
+            btn.innerHTML = textoOriginal;
+            btn.style.pointerEvents = "auto";
+            btn.style.opacity = "1";
+            
+            alert("❌ Falló el envío automático (Sin conexión o error de red).\n\n¡QUEDATE TRANQUILO! El viaje ya se guardó en tu botón de 'Historial' arriba. Además, se descarga localmente en el equipo ahora mismo.");
+            forzarDescargaLocal(blob, fileName);
+            habilitarBotonLimpiar(); 
+        }
+    }
+
+    function forzarDescargaLocal(blob, fileName) {
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    let canvas, ctx, dibujando = false;
+
+    function inicializarCanvas() {
+        canvas = document.getElementById('canvasFirma');
+        ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 160; 
+        ctx.strokeStyle = "#000080"; 
+        ctx.lineWidth = 2.5; 
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        if (firmaGuardada) {
+            let img = new Image();
+            img.onload = function() { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+            img.src = firmaGuardada;
+        }
+
+        canvas.addEventListener('mousedown', iniciarDibujo);
+        canvas.addEventListener('mousemove', dibujar);
+        canvas.addEventListener('mouseup', pararDibujo);
+        canvas.addEventListener('mouseleave', pararDibujo);
+
+        canvas.addEventListener('touchstart', function(e) {
+            if(canvasBloqueado) return;
+            let t = e.touches[0];
+            let rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(t.clientX - rect.left, t.clientY - rect.top);
+            dibujando = true;
+        });
+        canvas.addEventListener('touchmove', function(e) {
+            if (!dibujando || canvasBloqueado) return;
+            let t = e.touches[0];
+            let rect = canvas.getBoundingClientRect();
+            ctx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
+            ctx.stroke();
+            e.preventDefault(); 
+        });
+        canvas.addEventListener('touchend', function() { dibujando = false; });
+    }
+
+    function iniciarDibujo(e) { 
+        if(canvasBloqueado) return;
+        let rect = canvas.getBoundingClientRect(); 
+        ctx.beginPath(); 
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top); 
+        dibujando = true; 
+    }
+    
+    function dibujar(e) { 
+        if (!dibujando || canvasBloqueado) return; 
+        let rect = canvas.getBoundingClientRect(); 
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top); 
+        ctx.stroke(); 
+    }
+    
+    function pararDibujo() { dibujando = false; }
+    
+    function limpiarFirma(e) { 
+        e.preventDefault(); 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        firmaGuardada = null; 
+        canvasBloqueado = false; 
+    }
+</script>
+
+</body>
+</html>
