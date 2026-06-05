@@ -380,7 +380,7 @@
     }
 
     function cambiarChoferManual() {
-        if(confirm("¿Desea cambiar el chofer asignado a este dispositivo?\n\nSe borrará el número secuencial actual para tomar la base del nuevo chofer seleccionado.")) {
+        if(confirm("¿Desea cambiar el chofer asignado a este dispositivo, DEBE COLOCAR EL NUMERO ASIGNADO A SU NOMBRE EJEMPLO 1,2 ETC?\n\nSe borrará el número secuencial actual para tomar la base del nuevo chofer seleccionado.")) {
             localStorage.removeItem('chofer_asignado');
             localStorage.removeItem('ultimo_voucher_numero');
             location.reload();
