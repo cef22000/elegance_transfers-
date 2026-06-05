@@ -119,7 +119,7 @@
             body { background: white; padding: 20px; margin: 0; display: block; }
             .container { box-shadow: none; border: none; padding: 0; max-width: 100%; width: 100%; margin: 0; }
             .boleta-papel { border: 2px solid #000; padding: 15px; }
-            .btn, .btn-back, .btn-clear, .btn-enviar, .btn-bloqueado, .btn-pdf, #btnLimpiar { display: none !important; }
+            .btn, .btn-back, .btn-clear, .btn-enviar, .btn-bloqueado, .btn-pdf, #btnLimpiar, #btnCompartirWA { display: none !important; }
             .firma-disclaimer { display: none !important; }
         }
     </style>
@@ -131,6 +131,7 @@
     <div class="header-app">
         <h2>Elegance</h2>
         <div class="header-botones" id="bloqueBotonesAdmin">
+            <button class="btn-import" onclick="cambiarChoferManual()">👤 Chofer</button>
             <button class="btn-import" onclick="toggleHistorialPanel()">📋 Historial</button>
             <label class="btn-import" for="importFile">📥 Importar</label>
         </div>
@@ -145,7 +146,6 @@
         <div id="listaRespaldos"></div>
     </div>
     
-    <!-- PÁGINA 1 -->
     <div id="paso1" class="step active">
         
         <div class="bloque-formulario" style="background-color: #edf2f7;">
@@ -237,7 +237,6 @@
         <button class="btn" onclick="irAlPaso2()">Generar Vista de Boleta</button>
     </div>
 
-    <!-- PÁGINA 2 -->
     <div id="paso2" class="step">
         <div class="boleta-papel" id="area-impresion">
             <div class="boleta-header">
@@ -246,7 +245,7 @@
                 <table style="width:100%; font-size:12px; margin-top:5px;">
                     <tr>
                         <td style="font-weight:bold;">Elegance Transfers</td>
-                        <td style="text-align: right; font-weight:bold;">N° 0001 - <span id="resVoucher">________</span></td>
+                        <td style="text-align: right; font-weight:bold;">N° <span id="resVoucher">________</span></td>
                     </tr>
                     <tr>
                         <td id="resFecha">FECHA: __ / __ / ____</td>
@@ -289,7 +288,6 @@
                     <canvas id="canvasFirma"></canvas>
                 </div>
                 
-                <!-- SECCIÓN ACTUALIZADA CON NOMBRE, APELLIDO Y TRADUCCIÓN -->
                 <div style="width: 100%; max-width: 500px; text-align: left; margin-top: 8px;">
                     <label style="font-size: 13px; margin-bottom: 2px; font-family: Arial, sans-serif; display: block; font-weight: bold; color: #000;">Aclaración / Nombre y Apellido:</label>
                     <span style="display: block; font-size: 11px; color: #444; font-family: Arial, sans-serif; margin-bottom: 5px; font-weight: normal; font-style: italic;">Clarification / Name and Surname:</span>
@@ -297,6 +295,7 @@
                 </div>
 
                 <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                    <a href="#" id="btnCompartirWA" class="btn-clear" style="background-color: #007bff; color: white; border-color: #0056b3; display: none;" onclick="enviarLinkWhatsApp(event)">🟢 Enviar Link por WhatsApp</a>
                     <a href="#" class="btn-clear btn-enviar" onclick="aceptarYEnviar(event)">📲 Aceptar y Enviar</a>
                     <a href="#" class="btn-clear" onclick="limpiarFirma(event)">🗑️ Borrar Firma</a>
                 </div>
@@ -350,6 +349,60 @@
         document.getElementById('vEspera').value = totEsp > 0 ? totEsp.toFixed(2) : "";
     }
 
+    function configurarChoferInicial(rangos) {
+        let listaRangos = rangos || { "Daniel": 2000, "Pablo": 3000, "Alberto": 4000, "Emiliano": 5000 };
+        let opciones = "Configure el Chofer/Móvil para este dispositivo:\n\n";
+        let llaves = Object.keys(listaRangos);
+        llaves.forEach((name, idx) => {
+            opciones += (idx + 1) + ". " + name + " (Inicio: " + listaRangos[name] + ")\n";
+        });
+        opciones += "\nEscriba el número de opción:";
+        
+        let resp = prompt(opciones);
+        let idxSeleccionado = parseInt(resp) - 1;
+        if (idxSeleccionado >= 0 && idxSeleccionado < llaves.length) {
+            let nombre = llaves[idxSeleccionado];
+            let inicio = listaRangos[nombre];
+            localStorage.setItem('chofer_asignado', nombre);
+            localStorage.setItem('ultimo_voucher_numero', String(inicio));
+            document.getElementById('vNumero').value = String(inicio + 1).padStart(8, '0');
+            alert("✓ Dispositivo configurado para: " + nombre + "\nSerie base: " + inicio);
+        } else {
+            let nombre = llaves[0];
+            let inicio = listaRangos[nombre];
+            localStorage.setItem('chofer_asignado', nombre);
+            localStorage.setItem('ultimo_voucher_numero', String(inicio));
+            document.getElementById('vNumero').value = String(inicio + 1).padStart(8, '0');
+        }
+    }
+
+    function cambiarChoferManual() {
+        if(confirm("¿Desea cambiar el chofer asignado a este dispositivo?\n\nSe borrará el número secuencial actual para tomar la base del nuevo chofer seleccionado.")) {
+            localStorage.removeItem('chofer_asignado');
+            localStorage.removeItem('ultimo_voucher_numero');
+            location.reload();
+        }
+    }
+
+    function enviarLinkWhatsApp(e) {
+        e.preventDefault();
+        let params = new URLSearchParams();
+        params.set('modo', 'pasajero');
+        
+        let campos = ['vNumero', 'vFecha', 'vHora', 'empresa', 'solicitado', 'vehiculo', 'seccion', 'pasajero', 'origen', 'destino', 'vObservaciones', 'calcCantKm', 'calcPrecioKm', 'calcHoras', 'calcMinutos', 'calcPrecioEspera', 'vPeajes', 'vEstac'];
+        campos.forEach(id => {
+            params.set(id, document.getElementById(id).value);
+        });
+        
+        let urlBase = window.location.href.split('?')[0];
+        let urlCompleta = urlBase + '?' + params.toString();
+        
+        let mensaje = "Estimado pasajero, le compartimos el link para revisar y firmar digitalmente el voucher de su viaje N° " + document.getElementById('vNumero').value + " con Elegance Transfers:\n\n" + urlCompleta;
+        
+        let whatsappUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(mensaje);
+        window.open(whatsappUrl, '_blank');
+    }
+
     window.onload = function() {
         const parametros = new URLSearchParams(window.location.search);
         let inputPrecioKm = document.getElementById('calcPrecioKm');
@@ -358,27 +411,51 @@
         let labelPrecioEspera = document.getElementById('labelPrecioEspera');
         let bloqueAdmin = document.getElementById('bloqueBotonesAdmin');
 
+        // AUTO-COMPLETAR CAMPOS SI VIENE DESDE UN LINK COMPARTIDO (ADMIN O PASAJERO)
+        let camposUrl = ['vNumero', 'vFecha', 'vHora', 'empresa', 'solicitado', 'vehiculo', 'seccion', 'pasajero', 'origen', 'destino', 'vObservaciones', 'calcCantKm', 'calcPrecioKm', 'calcHoras', 'calcMinutos', 'calcPrecioEspera', 'vPeajes', 'vEstac', 'vAclaracion'];
+        let detectoParametros = false;
+        camposUrl.forEach(id => {
+            if (parametros.has(id)) {
+                document.getElementById(id).value = parametros.get(id);
+                detectoParametros = true;
+            }
+        });
+
+        if (detectoParametros) {
+            calcularImportes();
+        }
+
+        // CONTROL DE INTERFAZ EXCLUSIVA PARA EL PASAJERO
+        if (parametros.get('modo') === 'pasajero') {
+            irAlPaso2();
+            if(bloqueAdmin) bloqueAdmin.style.display = 'none';
+            document.querySelector('.header-app').style.display = 'none';
+            if(document.getElementById('btnPdf')) document.getElementById('btnPdf').style.display = 'none';
+            if(document.getElementById('btnLimpiar')) document.getElementById('btnLimpiar').style.display = 'none';
+            if(document.getElementById('btnCompartirWA')) document.getElementById('btnCompartirWA').style.display = 'none';
+            document.querySelector('.btn-back').style.display = 'none';
+            return; 
+        }
+
+        // ASIGNACIÓN NORMAL POR MODO DE TRABAJO (PRO O ESTÁNDAR)
         if (parametros.get('modo') !== 'pro') {
             inputPrecioKm.style.cursor = "not-allowed";
             inputPrecioEspera.style.cursor = "not-allowed";
             labelPrecioKm.title = "Bloqueado por el administrador";
             labelPrecioEspera.title = "Bloqueado por el administrador";
-            
-            if(bloqueAdmin) {
-                bloqueAdmin.style.display = 'none';
-            }
+            if(bloqueAdmin) bloqueAdmin.style.display = 'none';
         } else {
             inputPrecioKm.style.cursor = "pointer";
             inputPrecioEspera.style.cursor = "pointer";
             inputPrecioKm.style.backgroundColor = "#fff3cd"; 
             inputPrecioEspera.style.backgroundColor = "#fff3cd";
+            if(bloqueAdmin) bloqueAdmin.style.display = 'flex';
             
-            let btnPdf = document.getElementById('btnPdf');
-            if(btnPdf) {
-                btnPdf.style.display = 'block';
-            }
+            if(document.getElementById('btnPdf')) document.getElementById('btnPdf').style.display = 'block';
+            if(document.getElementById('btnCompartirWA')) document.getElementById('btnCompartirWA').style.display = 'block';
         }
 
+        // CARGA SECUENCIAL BASADA EN CONTEOS POR CHOFER
         fetch('config.json')
             .then(response => {
                 if (!response.ok) throw new Error("No se pudo leer config.json");
@@ -388,27 +465,41 @@
                 document.getElementById('calcPrecioKm').value = data.precio_km || "100";
                 document.getElementById('calcPrecioEspera').value = data.precio_hora || "5000";
                 calcularImportes();
+                
+                if (!detectoParametros) {
+                    let ultimoNumero = localStorage.getItem('ultimo_voucher_numero');
+                    if (ultimoNumero) {
+                        document.getElementById('vNumero').value = String(parseInt(ultimoNumero) + 1).padStart(8, '0');
+                    } else {
+                        configurarChoferInicial(data.rangos_choferes);
+                    }
+                }
             })
             .catch(error => {
                 document.getElementById('calcPrecioKm').value = localStorage.getItem('precio_km_guardado') || "100";
                 document.getElementById('calcPrecioEspera').value = localStorage.getItem('precio_hora_guardado') || "5000";
                 calcularImportes();
+                
+                if (!detectoParametros) {
+                    let ultimoNumero = localStorage.getItem('ultimo_voucher_numero');
+                    if (ultimoNumero) {
+                        document.getElementById('vNumero').value = String(parseInt(ultimoNumero) + 1).padStart(8, '0');
+                    } else {
+                        configurarChoferInicial(null);
+                    }
+                }
             });
 
-        let ahora = new Date();
-        let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
-        let dia = ("0" + ahora.getDate()).slice(-2);
-        document.getElementById('vFecha').value = blueprint = ahora.getFullYear() + "-" + mes + "-" + dia;
-        
-        let horas = ("0" + ahora.getHours()).slice(-2);
-        let minutos = ("0" + ahora.getMinutes()).slice(-2);
-        document.getElementById('vHora').value = horas + ":" + minutos;
-
-        let ultimoNumero = localStorage.getItem('ultimo_voucher_numero');
-        if (ultimoNumero) {
-            document.getElementById('vNumero').value = String(parseInt(ultimoNumero) + 1).padStart(8, '0');
-        } else {
-            document.getElementById('vNumero').value = "00004810";
+        // RELLENADO DE FECHA Y HORA SI ES NUEVO
+        if (!detectoParametros) {
+            let ahora = new Date();
+            let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
+            let dia = ("0" + ahora.getDate()).slice(-2);
+            document.getElementById('vFecha').value = ahora.getFullYear() + "-" + mes + "-" + dia;
+            
+            let horas = ("0" + ahora.getHours()).slice(-2);
+            let minutos = ("0" + ahora.getMinutes()).slice(-2);
+            document.getElementById('vHora').value = horas + ":" + minutos;
         }
 
         actualizarDatalist('empresa', 'lista-empresas');
@@ -527,7 +618,10 @@
         document.getElementById('paso1').classList.remove('active');
         document.getElementById('paso2').classList.add('active');
         
-        document.getElementById('bloqueBotonesAdmin').style.display = 'none';
+        const parametros = new URLSearchParams(window.location.search);
+        if (parametros.get('modo') !== 'pasajero' && bloqueAdmin) {
+            bloqueAdmin.style.display = 'none';
+        }
         
         inicializarCanvas();
     }
@@ -537,8 +631,8 @@
         document.getElementById('paso1').classList.add('active');
         
         const parametros = new URLSearchParams(window.location.search);
-        if (parametros.get('modo') === 'pro') {
-            document.getElementById('bloqueBotonesAdmin').style.display = 'flex';
+        if (parametros.get('modo') === 'pro' && bloqueAdmin) {
+            bloqueAdmin.style.display = 'flex';
         }
     }
 
@@ -572,14 +666,11 @@
 
     function toggleHistorialPanel() {
         let p = document.getElementById('panelHistorial');
-        
         if (p.style.display === 'block') {
             p.style.display = 'none';
             return;
         }
-        
         let clave = prompt("🔐 ACCESO RESTRINGIDO\n\nIngrese la clave de administrador para ver el historial:");
-        
         if (clave === "1234") { 
             p.style.display = 'block';
         } else if (clave !== null) {
@@ -613,15 +704,18 @@
 
     function habilitarBotonLimpiar() {
         let btnLimpiar = document.getElementById('btnLimpiar');
-        btnLimpiar.disabled = false;
-        btnLimpiar.classList.remove('btn-bloqueado');
-        btnLimpiar.style.backgroundColor = "#e53e3e";
-        btnLimpiar.style.borderColor = "#c53030";
-        btnLimpiar.innerHTML = "⚠️ Terminar y Limpiar Planilla";
+        if(btnLimpiar) {
+            btnLimpiar.disabled = false;
+            btnLimpiar.classList.remove('btn-bloqueado');
+            btnLimpiar.style.backgroundColor = "#e53e3e";
+            btnLimpiar.style.borderColor = "#c53030";
+            btnLimpiar.innerHTML = "⚠️ Terminar y Limpiar Planilla";
+        }
     }
 
     async function aceptarYEnviar(e) {
         e.preventDefault();
+        const parametros = new URLSearchParams(window.location.search);
         
         if(!canvasBloqueado) {
             firmaGuardada = canvas.toDataURL();
@@ -681,7 +775,8 @@
             "Espera: " + esperaText + "\n" +
             "Peajes: " + peajesText + "\n" +
             "Estac: " + estacText + "\n" +
-            "💰 *TOTAL: " + totalText + "*";
+            "💰 *TOTAL: " + totalText + "*\n" +
+            "✍️ Aclaración: " + (data.vAclaracion || "-");
 
         let formData = new FormData();
         formData.append("chat_id", CHAT_ID);
@@ -708,7 +803,18 @@
 
             if (resData.ok) {
                 alert("Voucher enviado con éxito");
-                habilitarBotonLimpiar(); 
+                
+                if (parametros.get('modo') === 'pasajero') {
+                    document.body.innerHTML = `
+                        <div style="font-family: Arial, sans-serif; text-align: center; padding: 40px 20px; background: white; max-width: 500px; margin: 40px auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            <h2 style="color: #25D366; margin-bottom: 15px;">✓ ¡Muchas Gracias!</h2>
+                            <p style="font-size: 16px; color: #333; line-height: 1.5;">Su firma y aclaración han sido registradas y enviadas correctamente al sistema de Elegance Transfers.</p>
+                            <p style="font-size: 14px; color: #777; margin-top: 20px;">Ya puede cerrar esta pestaña.</p>
+                        </div>
+                    `;
+                } else {
+                    habilitarBotonLimpiar(); 
+                }
             } else {
                 throw new Error(resData.description || "Error de API");
             }
@@ -717,9 +823,14 @@
             btn.style.pointerEvents = "auto";
             btn.style.opacity = "1";
             
-            alert("❌ Falló el envío automático (Sin conexión o error de red).\n\n¡QUEDATE TRANQUILO! El viaje ya se guardó en tu botón de 'Historial' arriba. Además, se descarga localmente en el equipo ahora mismo.");
-            forzarDescargaLocal(blob, fileName);
-            habilitarBotonLimpiar(); 
+            if (parametros.get('modo') === 'pasajero') {
+                alert("❌ Falló el envío automático por problemas de señal. Intente de nuevo.");
+                canvasBloqueado = false;
+            } else {
+                alert("❌ Falló el envío automático (Sin conexión o error de red).\n\n¡QUEDATE TRANQUILO! El viaje ya se guardó en tu botón de 'Historial' arriba. Además, se descarga localmente en el equipo ahora mismo.");
+                forzarDescargaLocal(blob, fileName);
+                habilitarBotonLimpiar(); 
+            }
         }
     }
 
