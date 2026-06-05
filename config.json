@@ -1,11 +1,12 @@
 JSON
 {
-  "precio_km": "2000",
-  "precio_hora": "20000",
+  "precio_km": 2000,
+  "precio_hora": 20000,
   "rangos_choferes": {
-    "Daniel":1100,
+    "Daniel": 1100,
     "Pablo": 6100,
     "Miguel": 4100,
     "Alberto": 7100,
     "Emiliano": 5100
   }
+}
