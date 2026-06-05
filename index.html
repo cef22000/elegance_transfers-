@@ -131,9 +131,9 @@
     <div class="header-app">
         <h2>Elegance</h2>
         <div class="header-botones" id="bloqueBotonesAdmin">
-            <button class="btn-import" onclick="cambiarChoferManual()">👤 Chofer</button>
-            <button class="btn-import" onclick="toggleHistorialPanel()">📋 Historial</button>
-            <label class="btn-import" for="importFile">📥 Importar</label>
+            <button class="btn-import" id="btnChofer" onclick="cambiarChoferManual()">👤 Chofer</button>
+            <button class="btn-import" id="btnHistorial" onclick="toggleHistorialPanel()">📋 Historial</button>
+            <label class="btn-import" id="btnImportar" for="importFile">📥 Importar</label>
         </div>
         <input type="file" id="importFile" accept=".json" style="display: none;">
     </div>
@@ -146,6 +146,7 @@
         <div id="listaRespaldos"></div>
     </div>
     
+    <!-- PÁGINA 1 -->
     <div id="paso1" class="step active">
         
         <div class="bloque-formulario" style="background-color: #edf2f7;">
@@ -237,6 +238,7 @@
         <button class="btn" onclick="irAlPaso2()">Generar Vista de Boleta</button>
     </div>
 
+    <!-- PÁGINA 2 -->
     <div id="paso2" class="step">
         <div class="boleta-papel" id="area-impresion">
             <div class="boleta-header">
@@ -410,6 +412,7 @@
         let labelPrecioKm = document.getElementById('labelPrecioKm');
         let labelPrecioEspera = document.getElementById('labelPrecioEspera');
         let bloqueAdmin = document.getElementById('bloqueBotonesAdmin');
+        let btnImportar = document.getElementById('btnImportar');
 
         // AUTO-COMPLETAR CAMPOS SI VIENE DESDE UN LINK COMPARTIDO (ADMIN O PASAJERO)
         let camposUrl = ['vNumero', 'vFecha', 'vHora', 'empresa', 'solicitado', 'vehiculo', 'seccion', 'pasajero', 'origen', 'destino', 'vObservaciones', 'calcCantKm', 'calcPrecioKm', 'calcHoras', 'calcMinutos', 'calcPrecioEspera', 'vPeajes', 'vEstac', 'vAclaracion'];
@@ -443,13 +446,14 @@
             inputPrecioEspera.style.cursor = "not-allowed";
             labelPrecioKm.title = "Bloqueado por el administrador";
             labelPrecioEspera.title = "Bloqueado por el administrador";
-            if(bloqueAdmin) bloqueAdmin.style.display = 'none';
+            // Ocultamos solo el botón de importar, dejamos visible el de Chofer y el Historial
+            if(btnImportar) btnImportar.style.display = 'none';
         } else {
             inputPrecioKm.style.cursor = "pointer";
             inputPrecioEspera.style.cursor = "pointer";
             inputPrecioKm.style.backgroundColor = "#fff3cd"; 
             inputPrecioEspera.style.backgroundColor = "#fff3cd";
-            if(bloqueAdmin) bloqueAdmin.style.display = 'flex';
+            if(btnImportar) btnImportar.style.display = 'inline-block';
             
             if(document.getElementById('btnPdf')) document.getElementById('btnPdf').style.display = 'block';
             if(document.getElementById('btnCompartirWA')) document.getElementById('btnCompartirWA').style.display = 'block';
@@ -618,10 +622,7 @@
         document.getElementById('paso1').classList.remove('active');
         document.getElementById('paso2').classList.add('active');
         
-        const parametros = new URLSearchParams(window.location.search);
-        if (parametros.get('modo') !== 'pasajero' && bloqueAdmin) {
-            bloqueAdmin.style.display = 'none';
-        }
+        // Se sacó la línea que ocultaba el bloque de admin acá, para que cuando vuelvas al paso 1 sigan estando
         
         inicializarCanvas();
     }
@@ -629,11 +630,6 @@
     function volverAlPaso1() {
         document.getElementById('paso2').classList.remove('active');
         document.getElementById('paso1').classList.add('active');
-        
-        const parametros = new URLSearchParams(window.location.search);
-        if (parametros.get('modo') === 'pro' && bloqueAdmin) {
-            bloqueAdmin.style.display = 'flex';
-        }
     }
 
     function finalizarVoucher() {
