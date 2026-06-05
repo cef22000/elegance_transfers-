@@ -114,17 +114,9 @@
             cursor: not-allowed !important;
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN / PDF MODIFICADA */
         @media print {
-            /* Esta regla oculta la ruta del archivo y la fecha del navegador */
             @page { margin: 0; } 
-            
-            body { 
-                background: white; 
-                padding: 20px; /* Separamos un poco del borde para que no se corte al imprimir sin márgenes */
-                margin: 0; 
-                display: block; 
-            }
+            body { background: white; padding: 20px; margin: 0; display: block; }
             .container { box-shadow: none; border: none; padding: 0; max-width: 100%; width: 100%; margin: 0; }
             .boleta-papel { border: 2px solid #000; padding: 15px; }
             .btn, .btn-back, .btn-clear, .btn-enviar, .btn-bloqueado, .btn-pdf, #btnLimpiar { display: none !important; }
@@ -362,12 +354,17 @@
         let inputPrecioEspera = document.getElementById('calcPrecioEspera');
         let labelPrecioKm = document.getElementById('labelPrecioKm');
         let labelPrecioEspera = document.getElementById('labelPrecioEspera');
+        let bloqueAdmin = document.getElementById('bloqueBotonesAdmin');
 
         if (parametros.get('modo') !== 'pro') {
             inputPrecioKm.style.cursor = "not-allowed";
             inputPrecioEspera.style.cursor = "not-allowed";
             labelPrecioKm.title = "Bloqueado por el administrador";
             labelPrecioEspera.title = "Bloqueado por el administrador";
+            
+            if(bloqueAdmin) {
+                bloqueAdmin.style.display = 'none';
+            }
         } else {
             inputPrecioKm.style.cursor = "pointer";
             inputPrecioEspera.style.cursor = "pointer";
@@ -380,8 +377,21 @@
             }
         }
 
-        document.getElementById('calcPrecioKm').value = localStorage.getItem('precio_km_guardado') || "100";
-        document.getElementById('calcPrecioEspera').value = localStorage.getItem('precio_hora_guardado') || "5000";
+        fetch('config.json')
+            .then(response => {
+                if (!response.ok) throw new Error("No se pudo leer config.json");
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('calcPrecioKm').value = data.precio_km || "100";
+                document.getElementById('calcPrecioEspera').value = data.precio_hora || "5000";
+                calcularImportes();
+            })
+            .catch(error => {
+                document.getElementById('calcPrecioKm').value = localStorage.getItem('precio_km_guardado') || "100";
+                document.getElementById('calcPrecioEspera').value = localStorage.getItem('precio_hora_guardado') || "5000";
+                calcularImportes();
+            });
 
         let ahora = new Date();
         let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
@@ -523,11 +533,15 @@
     function volverAlPaso1() {
         document.getElementById('paso2').classList.remove('active');
         document.getElementById('paso1').classList.add('active');
-        document.getElementById('bloqueBotonesAdmin').style.display = 'flex';
+        
+        const parametros = new URLSearchParams(window.location.search);
+        if (parametros.get('modo') === 'pro') {
+            document.getElementById('bloqueBotonesAdmin').style.display = 'flex';
+        }
     }
 
     function finalizarVoucher() {
-        if(!confirm("⚠️ ¿Estás seguro de que querés borrar todo y empezar un viaje nuevo?\n\nLos datos ya enviados o guardados en tu historial local no se van a perder.")) {
+        if(!confirm("⚠️ ¿Estás seguro de que querés limpiar y empezar un viaje nuevo?")) {
             return; 
         }
 
@@ -644,7 +658,7 @@
         let blob = new Blob([jsonStr], { type: "application/json" });
 
         const BOT_TOKEN = "8680131403:AAHb1uAf3bYAIhzEZR4zA_auHubmu7iiAFg";
-        const CHAT_ID = "8359032557"; 
+        const CHAT_ID = "-1003594595839"; 
         
         let kmText = document.getElementById('mKm').innerText;
         let esperaText = document.getElementById('mEspera').innerText;
@@ -691,7 +705,7 @@
             btn.style.opacity = "1";
 
             if (resData.ok) {
-                alert("🚀 ¡Voucher enviado de forma directa a tu chat con éxito!");
+                alert("Voucher enviado con éxito");
                 habilitarBotonLimpiar(); 
             } else {
                 throw new Error(resData.description || "Error de API");
