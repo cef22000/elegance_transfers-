@@ -141,13 +141,12 @@
 
     <div id="panelHistorial" class="panel-historial">
         <div class="bloque-titulo" style="margin-bottom: 10px; display: flex; justify-content: space-between;">
-            <span>Respaldos en este Teléfono (Últimos 30)</span>
+            <span>Respaldos en este Teléfono (Últimos 10)</span>
             <span style="color:red; cursor:pointer;" onclick="toggleHistorialPanel()">[Cerrar]</span>
         </div>
         <div id="listaRespaldos"></div>
     </div>
     
-    <!-- PÁGINA 1 -->
     <div id="paso1" class="step active">
         
         <div class="bloque-formulario" style="background-color: #edf2f7;">
@@ -239,7 +238,6 @@
         <button class="btn" onclick="irAlPaso2()">Generar Vista de Boleta</button>
     </div>
 
-    <!-- PÁGINA 2 -->
     <div id="paso2" class="step">
         <div class="boleta-papel" id="area-impresion">
             <div class="boleta-header">
@@ -623,8 +621,6 @@
         document.getElementById('paso1').classList.remove('active');
         document.getElementById('paso2').classList.add('active');
         
-        // Se sacó la línea que ocultaba el bloque de admin acá, para que cuando vuelvas al paso 1 sigan estando
-        
         inicializarCanvas();
     }
 
@@ -652,11 +648,12 @@
         location.reload();
     }
 
+    // CAMBIO 1: El historial guarda solo los últimos 10
     function guardarRespaldoLocal(data) {
         let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
         lista = lista.filter(item => item.vNumero !== data.vNumero);
         lista.unshift(data); 
-        if(lista.length > 30) lista.pop(); 
+        if(lista.length > 10) lista.pop(); 
         localStorage.setItem('respaldos_seguridad_local', JSON.stringify(lista));
         renderHistorialLocal();
     }
@@ -675,6 +672,7 @@
         }
     }
 
+    // CAMBIO 2 y 3: Se agregan los botones de Bajar JSON y Reenviar en el panel de Historial
     function renderHistorialLocal() {
         let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
         let cont = document.getElementById('listaRespaldos');
@@ -693,10 +691,107 @@
             
             div.innerHTML = `
                 <div><strong>N° ${item.vNumero || 'S/N'}</strong> - ${item.empresa || 'Sin Empresa'} (${fFormato} - ${item.vHora || ''})</div>
-                <button onclick="recuperarVoucherLocal(${index})">Cargar</button>
+                <div style="display: flex; gap: 4px;">
+                    <button onclick="descargarVoucherLocal(${index})" style="background:#dd6b20; padding:4px 6px; color:white; border:none; border-radius:3px; cursor:pointer;" title="Descargar JSON">📥</button>
+                    <button id="btnReenviar_${index}" onclick="reenviarDesdeHistorial(${index})" style="background:#25D366; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Reenviar</button>
+                </div>
             `;
             cont.appendChild(div);
         });
+    }
+
+    // NUEVA FUNCIÓN: Descargar JSON local
+    function descargarVoucherLocal(index) {
+        let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
+        let data = lista[index];
+        if(!data) return;
+
+        let empresaNombre = data.empresa ? data.empresa.replace(/\s+/g, '_') : 'SinEmpresa';
+        let fileName = "Voucher_" + data.vNumero + "_" + empresaNombre + ".json";
+        let blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+
+        forzarDescargaLocal(blob, fileName);
+        alert("✅ Archivo JSON descargado.\nRevisá la carpeta de 'Descargas' o 'Downloads' en tu celular.");
+    }
+
+    // NUEVA FUNCIÓN: Reenviar a Telegram directo desde el historial
+    async function reenviarDesdeHistorial(index) {
+        if (!confirm("¿Querés reenviar este voucher a Telegram?")) return;
+
+        let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
+        let data = lista[index];
+
+        const BOT_TOKEN = "8680131403:AAHb1uAf3bYAIhzEZR4zA_auHubmu7iiAFg";
+        const CHAT_ID = "-1003594595839";
+
+        let blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+        let empresaNombre = data.empresa ? data.empresa.replace(/\s+/g, '_') : 'SinEmpresa';
+        let fileName = "Voucher_" + data.vNumero + "_" + empresaNombre + ".json";
+
+        let cKm = parseFloat(data.calcCantKm) || 0;
+        let pKm = parseFloat(data.calcPrecioKm) || 0;
+        let hs = parseFloat(data.calcHoras) || 0;
+        let mins = parseFloat(data.calcMinutos) || 0;
+        let pEsp = parseFloat(data.calcPrecioEspera) || 0;
+
+        let km = cKm * pKm;
+        let espera = (hs + (mins / 60)) * pEsp;
+        let peajes = parseFloat(data.vPeajes) || 0;
+        let estac = parseFloat(data.vEstac) || 0;
+        let total = km + espera + peajes + estac;
+
+        let totalText = total === 0 ? "CTA. CTE." : "$ " + total.toFixed(2);
+        let kmText = km > 0 ? "$ " + km.toFixed(2) : "$ -----";
+        let esperaText = espera > 0 ? "$ " + espera.toFixed(2) : "$ -----";
+        let peajesText = peajes > 0 ? "$ " + peajes.toFixed(2) : "$ -----";
+        let estacText = estac > 0 ? "$ " + estac.toFixed(2) : "$ -----";
+
+        let textoTelegram = 
+            "📄 *REENVÍO - VOUCHER N° " + (data.vNumero || "S/N") + "*\n" +
+            "📅 " + (data.vFecha || "-") + " | 🕒 " + (data.vHora || "-") + "\n" +
+            "🚗 Móvil: " + (data.vehiculo || "-") + " | Sec: " + (data.seccion || "-") + "\n" +
+            "🏢 Empresa: " + (data.empresa || "-") + "\n" +
+            "👤 Pasajero: " + (data.pasajero || "-") + "\n" +
+            "📍 Desde: " + (data.origen || "-") + "\n" +
+            "🏁 Hasta: " + (data.destino || "-") + "\n" +
+            "──────────────\n" +
+            "Km: " + kmText + "\n" +
+            "Espera: " + esperaText + "\n" +
+            "Peajes: " + peajesText + "\n" +
+            "Estac: " + estacText + "\n" +
+            "💰 *TOTAL: " + totalText + "*\n" +
+            "✍️ Aclaración: " + (data.vAclaracion || "-");
+
+        let formData = new FormData();
+        formData.append("chat_id", CHAT_ID);
+        formData.append("document", blob, fileName);
+        formData.append("caption", textoTelegram);
+
+        let btn = document.getElementById("btnReenviar_" + index);
+        let textoOriginal = btn.innerHTML;
+        btn.innerHTML = "⏳...";
+        btn.style.pointerEvents = "none";
+
+        try {
+            let response = await fetch("https://api.telegram.org/bot" + BOT_TOKEN + "/sendDocument", {
+                method: "POST",
+                body: formData
+            });
+
+            let resData = await response.json();
+            btn.innerHTML = textoOriginal;
+            btn.style.pointerEvents = "auto";
+
+            if (resData.ok) {
+                alert("✅ Voucher reenviado con éxito a Telegram.");
+            } else {
+                alert("❌ Error al reenviar: " + resData.description);
+            }
+        } catch (err) {
+            btn.innerHTML = textoOriginal;
+            btn.style.pointerEvents = "auto";
+            alert("❌ Error de red al reenviar.");
+        }
     }
 
     function habilitarBotonLimpiar() {
