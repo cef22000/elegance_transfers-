@@ -289,9 +289,11 @@
                     <canvas id="canvasFirma"></canvas>
                 </div>
                 
+                <!-- SECCIÓN ACTUALIZADA CON NOMBRE, APELLIDO Y TRADUCCIÓN -->
                 <div style="width: 100%; max-width: 500px; text-align: left; margin-top: 8px;">
-                    <label style="font-size: 12px; margin-bottom: 2px; font-family: Arial, sans-serif;">Aclaración / Nombre:</label>
-                    <input type="text" id="vAclaracion" style="border: 1px solid #000; padding: 6px; background-color: #fafafa; border-radius: 0;">
+                    <label style="font-size: 13px; margin-bottom: 2px; font-family: Arial, sans-serif; display: block; font-weight: bold; color: #000;">Aclaración / Nombre y Apellido:</label>
+                    <span style="display: block; font-size: 11px; color: #444; font-family: Arial, sans-serif; margin-bottom: 5px; font-weight: normal; font-style: italic;">Clarification / Name and Surname:</span>
+                    <input type="text" id="vAclaracion" style="border: 1px solid #000; padding: 6px; background-color: #fafafa; border-radius: 0; width: 100%; box-sizing: border-box;">
                 </div>
 
                 <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
@@ -396,7 +398,7 @@
         let ahora = new Date();
         let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
         let dia = ("0" + ahora.getDate()).slice(-2);
-        document.getElementById('vFecha').value = ahora.getFullYear() + "-" + mes + "-" + dia;
+        document.getElementById('vFecha').value = blueprint = ahora.getFullYear() + "-" + mes + "-" + dia;
         
         let horas = ("0" + ahora.getHours()).slice(-2);
         let minutos = ("0" + ahora.getMinutes()).slice(-2);
