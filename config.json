@@ -1,4 +1,3 @@
-
 {
   "precio_km": 2000,
   "precio_hora": 20000,
@@ -8,5 +7,5 @@
     "Miguel": 4100,
     "Alberto": 7100,
     "Emiliano": 5100
-  
+  }
 }
