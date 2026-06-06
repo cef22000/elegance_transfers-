@@ -134,7 +134,7 @@
         <div class="header-botones" id="bloqueBotonesAdmin">
             <button class="btn-import" id="btnChofer" onclick="cambiarChoferManual()">👤 Chofer</button>
             <button class="btn-import" id="btnHistorial" onclick="toggleHistorialPanel()">📋 Historial</button>
-            <label class="btn-import" id="btnImportar" for="importFile">📥 Importar</label>
+            <label class="btn-import" id="btnImportar" for="importFile" style="display: none;">📥 Importar</label>
         </div>
         <input type="file" id="importFile" accept=".json" style="display: none;">
     </div>
@@ -413,6 +413,13 @@
         let bloqueAdmin = document.getElementById('bloqueBotonesAdmin');
         let btnImportar = document.getElementById('btnImportar');
 
+        // RELLENADO DE FECHA Y HORA TEMPRANO PARA EVITAR FALLOS
+        let ahora = new Date();
+        let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
+        let dia = ("0" + ahora.getDate()).slice(-2);
+        let horas = ("0" + ahora.getHours()).slice(-2);
+        let minutos = ("0" + ahora.getMinutes()).slice(-2);
+
         // AUTO-COMPLETAR CAMPOS SI VIENE DESDE UN LINK COMPARTIDO (ADMIN O PASAJERO)
         let camposUrl = ['vNumero', 'vFecha', 'vHora', 'empresa', 'solicitado', 'vehiculo', 'seccion', 'pasajero', 'origen', 'destino', 'vObservaciones', 'calcCantKm', 'calcPrecioKm', 'calcHoras', 'calcMinutos', 'calcPrecioEspera', 'vPeajes', 'vEstac', 'vAclaracion'];
         let detectoParametros = false;
@@ -423,7 +430,11 @@
             }
         });
 
-        if (detectoParametros) {
+        // ASIGNAMOS LA FECHA ACTUAL SOLO SI NO ESTAMOS CARGANDO DESDE UN ENLACE
+        if (!detectoParametros) {
+            document.getElementById('vFecha').value = ahora.getFullYear() + "-" + mes + "-" + dia;
+            document.getElementById('vHora').value = horas + ":" + minutos;
+        } else {
             calcularImportes();
         }
 
@@ -445,13 +456,14 @@
             inputPrecioEspera.style.cursor = "not-allowed";
             labelPrecioKm.title = "Bloqueado por el administrador";
             labelPrecioEspera.title = "Bloqueado por el administrador";
-            // Ocultamos solo el botón de importar, dejamos visible el de Chofer y el Historial
+            // Aseguramos que el botón no se vea
             if(btnImportar) btnImportar.style.display = 'none';
         } else {
             inputPrecioKm.style.cursor = "pointer";
             inputPrecioEspera.style.cursor = "pointer";
             inputPrecioKm.style.backgroundColor = "#fff3cd"; 
             inputPrecioEspera.style.backgroundColor = "#fff3cd";
+            // Solo en PRO se habilita el bloque Importar
             if(btnImportar) btnImportar.style.display = 'inline-block';
             
             if(document.getElementById('btnPdf')) document.getElementById('btnPdf').style.display = 'block';
@@ -492,18 +504,6 @@
                     }
                 }
             });
-
-        // RELLENADO DE FECHA Y HORA SI ES NUEVO
-        if (!detectoParametros) {
-            let ahora = new Date();
-            let mes = ("0" + (ahora.getMonth() + 1)).slice(-2);
-            let dia = ("0" + ahora.getDate()).slice(-2);
-            document.getElementById('vFecha').value = ahora.getFullYear() + "-" + mes + "-" + dia;
-            
-            let horas = ("0" + ahora.getHours()).slice(-2);
-            let minutos = ("0" + ahora.getMinutes()).slice(-2);
-            document.getElementById('vHora').value = horas + ":" + minutos;
-        }
 
         actualizarDatalist('empresa', 'lista-empresas');
         actualizarDatalist('vehiculo', 'lista-vehiculos');
@@ -621,12 +621,21 @@
         document.getElementById('paso1').classList.remove('active');
         document.getElementById('paso2').classList.add('active');
         
+        // OCULTAR LOS BOTONES DE LA CABECERA Y CAMBIAR NOMBRE DE ARCHIVO
+        document.getElementById('bloqueBotonesAdmin').style.display = 'none';
+        let emp = document.getElementById('empresa').value ? document.getElementById('empresa').value.trim().replace(/\s+/g, '_') : 'SinEmpresa';
+        document.title = "Voucher_" + numVoucher + "_" + emp;
+
         inicializarCanvas();
     }
 
     function volverAlPaso1() {
         document.getElementById('paso2').classList.remove('active');
         document.getElementById('paso1').classList.add('active');
+        
+        // MOSTRAR NUEVAMENTE LOS BOTONES Y RESTAURAR EL NOMBRE DE LA PÁGINA
+        document.getElementById('bloqueBotonesAdmin').style.display = 'flex';
+        document.title = "Elegance Transfers - Sistema Completo";
     }
 
     function finalizarVoucher() {
@@ -648,11 +657,11 @@
         location.reload();
     }
 
-    // CAMBIO 1: El historial guarda solo los últimos 10
     function guardarRespaldoLocal(data) {
         let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
         lista = lista.filter(item => item.vNumero !== data.vNumero);
         lista.unshift(data); 
+        // Límite fijado en 10
         if(lista.length > 10) lista.pop(); 
         localStorage.setItem('respaldos_seguridad_local', JSON.stringify(lista));
         renderHistorialLocal();
@@ -672,7 +681,6 @@
         }
     }
 
-    // CAMBIO 2 y 3: Se agregan los botones de Bajar JSON y Reenviar en el panel de Historial
     function renderHistorialLocal() {
         let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
         let cont = document.getElementById('listaRespaldos');
@@ -689,32 +697,44 @@
             let partFecha = item.vFecha ? item.vFecha.split("-") : ["??","??","??"];
             let fFormato = partFecha[2] + "/" + partFecha[1];
             
+            // LOS 3 BOTONES EN EL HISTORIAL: Cargar, Descargar y Reenviar
             div.innerHTML = `
-                <div><strong>N° ${item.vNumero || 'S/N'}</strong> - ${item.empresa || 'Sin Empresa'} (${fFormato} - ${item.vHora || ''})</div>
+                <div><strong>N° ${item.vNumero || 'S/N'}</strong> - ${item.empresa || 'Sin Empresa'} (${fFormato})</div>
                 <div style="display: flex; gap: 4px;">
+                    <button onclick="recuperarVoucherLocal(${index})" style="background:#3182ce; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;" title="Cargar">Cargar</button>
                     <button onclick="descargarVoucherLocal(${index})" style="background:#dd6b20; padding:4px 6px; color:white; border:none; border-radius:3px; cursor:pointer;" title="Descargar JSON">📥</button>
-                    <button id="btnReenviar_${index}" onclick="reenviarDesdeHistorial(${index})" style="background:#25D366; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Reenviar</button>
+                    <button id="btnReenviar_${index}" onclick="reenviarDesdeHistorial(${index})" style="background:#25D366; color:white; border:none; padding:4px 6px; border-radius:3px; cursor:pointer;" title="Reenviar a Telegram">Reenviar</button>
                 </div>
             `;
             cont.appendChild(div);
         });
     }
 
-    // NUEVA FUNCIÓN: Descargar JSON local
+    function recuperarVoucherLocal(index) {
+        let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
+        if (index >= 0 && index < lista.length) {
+            let data = lista[index];
+            cargarEstructuraData(data);
+            toggleHistorialPanel();
+            alert("✅ Datos recuperados correctamente.");
+        } else {
+            alert("❌ Error: No se pudo encontrar el voucher en la memoria.");
+        }
+    }
+
     function descargarVoucherLocal(index) {
         let lista = JSON.parse(localStorage.getItem('respaldos_seguridad_local')) || [];
         let data = lista[index];
         if(!data) return;
 
-        let empresaNombre = data.empresa ? data.empresa.replace(/\s+/g, '_') : 'SinEmpresa';
-        let fileName = "Voucher_" + data.vNumero + "_" + empresaNombre + ".json";
+        let empresaNombre = data.empresa ? data.empresa.trim().replace(/\s+/g, '_') : 'SinEmpresa';
+        let fileName = "Voucher_" + (data.vNumero || "0000") + "_" + empresaNombre + ".json";
         let blob = new Blob([JSON.stringify(data)], { type: "application/json" });
 
         forzarDescargaLocal(blob, fileName);
         alert("✅ Archivo JSON descargado.\nRevisá la carpeta de 'Descargas' o 'Downloads' en tu celular.");
     }
 
-    // NUEVA FUNCIÓN: Reenviar a Telegram directo desde el historial
     async function reenviarDesdeHistorial(index) {
         if (!confirm("¿Querés reenviar este voucher a Telegram?")) return;
 
@@ -725,8 +745,8 @@
         const CHAT_ID = "-1003594595839";
 
         let blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-        let empresaNombre = data.empresa ? data.empresa.replace(/\s+/g, '_') : 'SinEmpresa';
-        let fileName = "Voucher_" + data.vNumero + "_" + empresaNombre + ".json";
+        let empresaNombre = data.empresa ? data.empresa.trim().replace(/\s+/g, '_') : 'SinEmpresa';
+        let fileName = "Voucher_" + (data.vNumero || "0000") + "_" + empresaNombre + ".json";
 
         let cKm = parseFloat(data.calcCantKm) || 0;
         let pKm = parseFloat(data.calcPrecioKm) || 0;
@@ -839,8 +859,8 @@
 
         guardarRespaldoLocal(data);
 
-        let empresaNombre = data.empresa ? data.empresa.replace(/\s+/g, '_') : 'SinEmpresa';
-        let fileName = "Voucher_" + data.vNumero + "_" + empresaNombre + ".json";
+        let empresaNombre = data.empresa ? data.empresa.trim().replace(/\s+/g, '_') : 'SinEmpresa';
+        let fileName = "Voucher_" + (data.vNumero || "0000") + "_" + empresaNombre + ".json";
         
         let jsonStr = JSON.stringify(data);
         let blob = new Blob([jsonStr], { type: "application/json" });
