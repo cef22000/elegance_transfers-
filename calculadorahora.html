@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Hora - Elegance Transfers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #555;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .modulo-espera {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+
+        h3 {
+            color: #1a365d;
+            margin-top: 0;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            text-align: center;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+
+        .bloque {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .bloque-titulo {
+            font-size: 11px;
+            font-weight: bold;
+            color: #4a5568;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .fila-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .columna {
+            flex: 1;
+            min-width: 0;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #2d3748;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #a0aec0;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        input:focus {
+            border-color: #4299e1;
+            outline: none;
+            background-color: #fff;
+        }
+
+        /* Estilo para campo protegido con contraseña */
+        .campo-protegido {
+            background-color: #cbd5e0;
+            color: #1a365d;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid #718096;
+        }
+        .campo-protegido:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* Estilos del Cronómetro */
+        .cronometro-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            background: #2d3748;
+            color: #63b3ed;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .botones-crono {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-crono {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 11px;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .btn-iniciar { background-color: #48bb78; }
+        .btn-iniciar:hover { background-color: #38a169; }
+        .btn-pausar { background-color: #ecc94b; color: #2d3748; }
+        .btn-pausar:hover { background-color: #d69e2e; }
+        .btn-detener { background-color: #f56565; }
+        .btn-detener:hover { background-color: #e53e3e; }
+
+        /* Bloque de Resultados */
+        .resultado-box {
+            background-color: #ebf8ff;
+            border: 2px dashed #4299e1;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .monto-total {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-top: 5px;
+        }
+
+        .info-formula {
+            font-size: 11px;
+            color: #718096;
+            margin-top: 8px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="modulo-espera">
+    <h3>Calculadora de Hora</h3>
+
+    <div class="bloque">
+        <div class="bloque-titulo">⏱️ Modo Cronómetro (Tiempo Real)</div>
+        <div class="cronometro-display" id="cronoDisplay">00:00:00</div>
+        <div class="botones-crono">
+            <button class="btn-crono btn-iniciar" id="btnIniciar">Iniciar</button>
+            <button class="btn-crono btn-pausar" id="btnPausar" style="display:none;">Pausar</button>
+            <button class="btn-crono btn-detener" id="btnDetener" style="display:none;">Detener</button>
+        </div>
+    </div>
+
+    <div class="bloque">
+        <div class="bloque-titulo">✍️ Tiempos y Tarifas</div>
+        
+        <div class="fila-inputs">
+            <div class="columna">
+                <label>Horas:</label>
+                <input type="number" id="calcHoras" placeholder="0" min="0">
+            </div>
+            <div class="columna">
+                <label>Minutos:</label>
+                <input type="number" id="calcMinutos" placeholder="0" min="0" max="59">
+            </div>
+        </div>
+
+        <div class="fila-inputs">
+            <div class="columna">
+                <label title="Click para modificar (Requiere Clave)">Precio por Hora ($) 🔒:</label>
+                <input type="text" id="calcPrecioEspera" value="20000" class="campo-protegido" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="resultado-box">
+        <label style="font-size: 14px; color: #2d3748;">Subtotal Espera Calculado:</label>
+        <div class="monto-total" id="resultadoFinal">$ 0.00</div>
+        <div class="info-formula" id="infoDetalle">0 hs y 0 min a $5000/hr</div>
+    </div>
+</div>
+
+<script>
+    // Variables globales de estado del cronómetro
+    let tiempoInicio = 0;
+    let tiempoTranscurrido = 0;
+    let intervaloCrono = null;
+    let cronoActivo = false;
+
+    // Elementos globales del DOM que se asignarán al cargar la página
+    let btnIniciar, btnPausar, btnDetener, cronoDisplay;
+    let calcHoras, calcMinutos, calcPrecioEspera;
+    let resultadoFinal, infoDetalle;
+
+    // Al cargar el DOM, mapeamos elementos e inyectamos los listeners nativos
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("Inicializando módulo de espera...");
+
+        btnIniciar = document.getElementById('btnIniciar');
+        btnPausar = document.getElementById('btnPausar');
+        btnDetener = document.getElementById('btnDetener');
+        cronoDisplay = document.getElementById('cronoDisplay');
+        
+        calcHoras = document.getElementById('calcHoras');
+        calcMinutos = document.getElementById('calcMinutos');
+        calcPrecioEspera = document.getElementById('calcPrecioEspera');
+        
+        resultadoFinal = document.getElementById('resultadoFinal');
+        infoDetalle = document.getElementById('infoDetalle');
+
+        // Escuchadores de eventos asignados de manera nativa
+        if (btnIniciar) btnIniciar.addEventListener('click', iniciarCronometro);
+        if (btnPausar) btnPausar.addEventListener('click', pausarCronometro);
+        if (btnDetener) btnDetener.addEventListener('click', detenerCronometro);
+
+        if (calcHoras) calcHoras.addEventListener('input', calcularEsperaCompleta);
+        if (calcMinutos) calcMinutos.addEventListener('input', calcularEsperaCompleta);
+        
+        // El campo de precio ahora reacciona al click en lugar de input para pedir contraseña
+        if (calcPrecioEspera) calcPrecioEspera.addEventListener('click', solicitarClaveParaPrecio);
+        
+        // Calculo inicial
+        calcularEsperaCompleta();
+    });
+
+    // --- FUNCIONES DE SEGURIDAD ---
+
+    function solicitarClaveParaPrecio() {
+        let clave = prompt("🔒 ACCESO RESTRINGIDO\n\nIngrese la clave de administrador para cambiar el precio:");
+        
+        if (clave === "1234") {
+            let actual = calcPrecioEspera.value;
+            let nuevoValor = prompt("✓ Clave correcta.\n\nIngrese el nuevo precio por hora:", actual);
+            
+            if (nuevoValor !== null && nuevoValor.trim() !== "") {
+                // Reemplazar comas por puntos para evitar errores de parseo
+                nuevoValor = nuevoValor.replace(',', '.'); 
+                
+                if (!isNaN(nuevoValor) && parseFloat(nuevoValor) >= 0) {
+                    calcPrecioEspera.value = parseFloat(nuevoValor);
+                    calcularEsperaCompleta(); // Recalcular automáticamente
+                } else {
+                    alert("❌ Por favor, ingrese un número válido mayor o igual a cero.");
+                }
+            }
+        } else if (clave !== null) {
+            // Si le dio a Cancelar (null) no decimos nada, solo si escribió mal
+            alert("❌ Clave incorrecta. No se modificó el precio.");
+        }
+    }
+
+    // --- FUNCIONES CORE ACCESIBLES ---
+
+    function iniciarCronometro() {
+        if (!cronoActivo) {
+            tiempoInicio = Date.now() - tiempoTranscurrido;
+            intervaloCrono = setInterval(actualizarCronoDisplay, 1000);
+            cronoActivo = true;
+            
+            btnIniciar.style.display = 'none';
+            btnPausar.style.display = 'inline-block';
+            btnDetener.style.display = 'inline-block';
+        }
+    }
+
+    function pausarCronometro() {
+        if (cronoActivo) {
+            clearInterval(intervaloCrono);
+            tiempoTranscurrido = Date.now() - tiempoInicio;
+            cronoActivo = false;
+            
+            btnIniciar.innerText = 'Continuar';
+            btnIniciar.style.display = 'inline-block';
+            btnPausar.style.display = 'none';
+        }
+    }
+
+    function detenerCronometro() {
+        if (confirm("¿Querés detener el cronómetro y pasar el tiempo a los campos numéricos?")) {
+            clearInterval(intervaloCrono);
+            
+            let totalSegundos = Math.floor(tiempoTranscurrido / 1000);
+            let horas = Math.floor(totalSegundos / 3600);
+            let minutos = Math.floor((totalSegundos % 3600) / 60);
+
+            // Cargar datos en los inputs visuales
+            calcHoras.value = horas;
+            calcMinutos.value = minutos;
+
+            // Resetear cronómetro
+            tiempoTranscurrido = 0;
+            cronoActivo = false;
+            cronoDisplay.innerText = "00:00:00";
+            
+            // Re-configurar botones
+            btnIniciar.innerText = 'Iniciar';
+            btnIniciar.style.display = 'inline-block';
+            btnPausar.style.display = 'none';
+            btnDetener.style.display = 'none';
+
+            // Forzar el recálculo financiero inmediato
+            calcularEsperaCompleta();
+        }
+    }
+
+    function actualizarCronoDisplay() {
+        tiempoTranscurrido = Date.now() - tiempoInicio;
+        let totalSegundos = Math.floor(tiempoTranscurrido / 1000);
+        
+        let hrs = Math.floor(totalSegundos / 3600);
+        let mins = Math.floor((totalSegundos % 3600) / 60);
+        let segs = totalSegundos % 60;
+
+        cronoDisplay.innerText = 
+            String(hrs).padStart(2, '0') + ":" + 
+            String(mins).padStart(2, '0') + ":" + 
+            String(segs).padStart(2, '0');
+    }
+
+    function calcularEsperaCompleta() {
+        let hs = parseFloat(calcHoras.value) || 0;
+        let mins = parseFloat(calcMinutos.value) || 0;
+        let precioHora = parseFloat(calcPrecioEspera.value) || 0;
+
+        let tiempoTotalEnHoras = hs + (mins / 60);
+        let importeTotalEspera = tiempoTotalEnHoras * precioHora;
+
+        if (importeTotalEspera > 0) {
+            resultadoFinal.innerText = "$ " + importeTotalEspera.toFixed(2);
+        } else {
+            resultadoFinal.innerText = "$ 0.00";
+        }
+
+        infoDetalle.innerText = 
+            hs + " hs y " + mins + " min a $" + precioHora + "/hr (Total: " + tiempoTotalEnHoras.toFixed(3) + " hrs)";
+    }
+</script>
+
+</body>
+</html>
